@@ -1,6 +1,5 @@
 import User from "../models/user.model.js";
 import Message from "../models/message.model.js";
-
 import cloudinary from "../lib/cloudinary.js";
 import { getReceiverSocketId, io } from "../lib/socket.js";
 
@@ -37,15 +36,24 @@ export const getMessages = async (req, res) => {
 
 export const sendMessage = async (req, res) => {
   try {
-    const { text, image } = req.body;
+    const { text, image, video } = req.body;
     const { id: receiverId } = req.params;
     const senderId = req.user._id;
 
     let imageUrl;
+    let videoUrl;
     if (image) {
       // Upload base64 image to cloudinary
       const uploadResponse = await cloudinary.uploader.upload(image);
       imageUrl = uploadResponse.secure_url;
+    }
+    if (video) {
+      // Upload base64 video to Cloudinary with a 50MB chunk size
+      const uploadResponse = await cloudinary.uploader.upload(video, {
+        resource_type: "video",
+        chunk_size: 50 * 1024 * 1024, // 50MB chunks
+      });
+      videoUrl = uploadResponse.secure_url;
     }
 
     const newMessage = new Message({
